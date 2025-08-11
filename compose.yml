@@ -1,0 +1,238 @@
+services:
+  haproxy:
+    image: docker.io/library/haproxy:3.2
+    container_name: haproxy
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - 9080:9080/tcp # status
+      - 8030:8030/tcp # StarRocks HTTP
+      - 9030:9030/tcp # StarRocks Query
+    healthcheck:
+      test: timeout 1 bash -c '</dev/tcp/localhost/9080' || exit 1
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+      starrocks-follower-1:
+        condition: service_healthy
+      starrocks-follower-2:
+        condition: service_healthy
+      starrocks-follower-3:
+        condition: service_healthy
+
+  starrocks-leader:
+    image: starrocks/fe-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-leader
+    hostname: leader
+    command: /opt/starrocks/fe_entrypoint.sh leader
+    environment:
+      - HOST_TYPE=FQDN
+    volumes:
+      - .data/starrocks-leader:/opt/starrocks/fe/meta:Z
+    healthcheck:
+      test: curl -f -s -o /dev/null -w '%{http_code}' http://localhost:8030 | grep 401
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+
+  starrocks-follower-1:
+    image: starrocks/fe-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-follower-1
+    hostname: follower-1
+    command: /opt/starrocks/fe_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+      FE_LEADER: leader
+    volumes:
+      - .data/starrocks-follower-1:/opt/starrocks/fe/meta:Z
+    healthcheck:
+      test: curl -f -s -o /dev/null -w '%{http_code}' http://localhost:8030 | grep 401
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+
+  starrocks-follower-2:
+    image: starrocks/fe-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-follower-2
+    hostname: follower-2
+    command: /opt/starrocks/fe_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+      FE_LEADER: leader
+    volumes:
+      - .data/starrocks-follower-2:/opt/starrocks/fe/meta:Z
+    healthcheck:
+      test: curl -f -s -o /dev/null -w '%{http_code}' http://localhost:8030 | grep 401
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+
+  starrocks-follower-3:
+    image: starrocks/fe-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-follower-3
+    hostname: follower-3
+    command: /opt/starrocks/fe_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+      FE_LEADER: leader
+    volumes:
+      - .data/starrocks-follower-3:/opt/starrocks/fe/meta:Z
+    healthcheck:
+      test: curl -f -s -o /dev/null -w '%{http_code}' http://localhost:8030 | grep 401
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+
+  starrocks-be-1:
+    image: starrocks/be-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-be-1
+    hostname: be-1
+    command: /opt/starrocks/be_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+    volumes:
+      - .data/starrocks-be-1:/opt/starrocks/be/storage:Z
+    healthcheck:
+      test: curl -o /dev/null http://localhost:8060/health
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+
+  starrocks-be-2:
+    image: starrocks/be-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-be-2
+    hostname: be-2
+    command: /opt/starrocks/be_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+    volumes:
+      - .data/starrocks-be-2:/opt/starrocks/be/storage:Z
+    healthcheck:
+      test: curl -o /dev/null http://localhost:8060/health
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+
+  starrocks-be-3:
+    image: starrocks/be-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-be-3
+    hostname: be-3
+    command: /opt/starrocks/be_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+    volumes:
+      - .data/starrocks-be-3:/opt/starrocks/be/storage:Z
+    healthcheck:
+      test: curl -o /dev/null http://localhost:8060/health
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+
+  starrocks-be-4:
+    image: starrocks/be-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-be-4
+    hostname: be-4
+    command: /opt/starrocks/be_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+    volumes:
+      - .data/starrocks-be-4:/opt/starrocks/be/storage:Z
+    healthcheck:
+      test: curl -o /dev/null http://localhost:8060/health
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+
+  starrocks-be-5:
+    image: starrocks/be-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-be-5
+    hostname: be-5
+    command: /opt/starrocks/be_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+    volumes:
+      - .data/starrocks-be-5:/opt/starrocks/be/storage:Z
+    healthcheck:
+      test: curl -o /dev/null http://localhost:8060/health
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
+
+  starrocks-be-6:
+    image: starrocks/be-ubuntu:3.5-latest
+    restart: unless-stopped
+    container_name: starrocks-be-6
+    hostname: be-6
+    command: /opt/starrocks/be_entrypoint.sh leader
+    environment:
+      HOST_TYPE: FQDN
+    volumes:
+      - .data/starrocks-be-6:/opt/starrocks/be/storage:Z
+    healthcheck:
+      test: curl -o /dev/null http://localhost:8060/health
+      interval: 60s
+      timeout: 1s
+      retries: 3
+      start_period: 1s
+      start_interval: 1s
+    depends_on:
+      starrocks-leader:
+        condition: service_healthy
