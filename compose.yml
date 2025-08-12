@@ -63,9 +63,6 @@ services:
       retries: 3
       start_period: 1s
       start_interval: 1s
-    depends_on:
-      starrocks-leader:
-        condition: service_healthy
 
   starrocks-follower-2:
     image: starrocks/fe-ubuntu:3.5-latest
@@ -85,9 +82,6 @@ services:
       retries: 3
       start_period: 1s
       start_interval: 1s
-    depends_on:
-      starrocks-leader:
-        condition: service_healthy
 
   starrocks-follower-3:
     image: starrocks/fe-ubuntu:3.5-latest
@@ -107,9 +101,6 @@ services:
       retries: 3
       start_period: 1s
       start_interval: 1s
-    depends_on:
-      starrocks-leader:
-        condition: service_healthy
 
   starrocks-be-1:
     image: starrocks/be-ubuntu:3.5-latest
